@@ -1,11 +1,15 @@
 import express from 'express';
 import connectDatabase from './config/db';
+import cors from 'cors';
 
 const app = express();
 
 connectDatabase();
 
 app.use(express.json({ extended: false }));
+
+// enable all cors requests
+app.use(cors())
 
 app.get('/', (req, res) =>
     res.send('http get request sent to root api endpoint')
