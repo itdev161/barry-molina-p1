@@ -4,6 +4,7 @@ import cors from 'cors';
 import { check, validationResult } from 'express-validator';
 import User from './models/Users';
 import List from './models/Lists';
+import mongoose from 'mongoose';
 
 const app = express();
 
@@ -30,19 +31,18 @@ app.get('/', (req, res) =>
     res.send('http get request sent to root api endpoint')
 );
 
-app.post('/api/lists', async (req, res) => {
+app.post('/api/getLists', async (req, res) => {
     const { id } = req.body;
     // const christmaslist = new List(
     //     {
     //         user: id,
     //         title: "Christmas List",
     //         items: [
-    //             "A very big soccer ball",
-    //             "two pairs of footie pajamas",
-    //             "A small trombone",
-    //             "A saxophone",
-    //             "Rabbit feet (for luck)",
-    //             "$20"
+    //             { desc: "A very big soccer ball"},
+    //             { desc: "two pairs of footie pajamas"},
+    //             { desc: "A small trombone"},
+    //             { desc: "A saxophone"},
+    //             { desc: "Rabbit feet (for luck)"},
     //         ]
     //     }
     // );
@@ -55,10 +55,10 @@ app.post('/api/lists', async (req, res) => {
     //         user: id,
     //         title: "Birthday Wish List",
     //         items: [
-    //             "Tools",
-    //             "Power tools",
-    //             "Dewalt angle grinder",
-    //             "etc."
+    //             { desc: "tools " },
+    //             { desc: "Power tools" },
+    //             { desc: "Dewalt angle grinder" },
+    //             { desc: "etc." }
     //         ]
     //     }
     // );
@@ -68,6 +68,43 @@ app.post('/api/lists', async (req, res) => {
     // })
     let lists = await List.find({ user: id });
     return res.json(lists);
+});
+
+app.post('/api/delItem', async (req, res) => {
+    const { listId, itemId } = req.body;
+    console.log(itemId);
+    try {
+        let list = await List.findById(listId);
+        list.items.id(itemId).remove();
+        // Equivalent to `parent.child = null`
+        list.save();
+        return res.send('Item deleted');
+        // let deleted = await ListItem.findByIdAndDelete(itemId);
+        // console.log(deleted);
+        // if (!deleted) {
+        //     return res.status(422).send('Item not found');
+        // }
+    } catch (error) {
+        console.log(error);
+        res.status(500).send('hi Server error');
+    }
+});
+app.post('/api/addItem', async (req, res) => {
+    const { listId, itemDesc } = req.body;
+    // console.log(listId, itemDesc);
+    try {
+        let list = await List.findById(listId);
+        if (!list) {
+            return res.status(422).send('List not found');
+        }
+        const itemId = mongoose.Types.ObjectId();
+        list.items.push({ _id: itemId, desc: itemDesc });
+        list = await list.save();
+        return res.json({ itemId });
+    } catch (error) {
+        console.log(error);
+        res.status(500).send('Server error');
+    }
 });
 app.post(
     '/api/users', 
@@ -89,7 +126,6 @@ app.post(
                       .status(422)
                       .json({ errors: [{ msg: 'Invalid username or password'}] });
                 }
-                console.log(user)
                 return res.json({ 'id': user._id, 'name': user.name });
             } catch (error) {
                 res.status(500).send('Server error');
