@@ -91,7 +91,6 @@ function displayList(thisList) {
             })
             .then(res => res.json())
             .then(({ itemId }) => {
-                // newItem = { _id: itemId, desc: itemDesc };
                 newItem = thisList.pushItem({ _id: itemId, desc: itemDesc }); // add itemid
                 newList.insertBefore(createListItem(thisList, newList, newItem), newItemInput);
                 newItemText.value = '';
@@ -179,7 +178,6 @@ function createListItem(thisList, newList, item) {
 }
 
 async function addDbItem(listId, itemDesc) {
-    //update db here
     let newItem = {};
     fetch(addItemURL, {
         method: 'POST',
@@ -190,14 +188,12 @@ async function addDbItem(listId, itemDesc) {
     })
     .then(res => res.json())
     .then(({ itemId }) => {
-        // newItem = { _id: itemId, desc: itemDesc };
         newItem = { itemId, itemDesc };
         console.log(newItem);
     })
     .catch(err => {
         console.log(err);
     })
-    // console.log(newItem);
     return newItem;
 }
 
@@ -252,7 +248,6 @@ function start() {
     .then(res => res.json())
     .then(listsData => {
         listsData.forEach(list => {
-            // displayList(list);
             loadList(list);
         });
         listArray.forEach(list => {
