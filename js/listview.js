@@ -1,11 +1,13 @@
 const lists = document.getElementById('lists');
 const welcomeBanner = document.getElementById('welcomeBanner');
+const addListBtn = document.getElementById('addListBtn');
+const newTitleText = document.getElementById('newTitleText');
 const getListsURL = 'http://localhost:3000/api/getlists'; 
 const addItemURL = 'http://localhost:3000/api/addItem'; 
 const delItemURL = 'http://localhost:3000/api/delItem'; 
+const delListURL = 'http://localhost:3000/api/delList'; 
+const addListURL = 'http://localhost:3000/api/addList'; 
 const user = JSON.parse(sessionStorage.getItem("currentUser"));
-
-welcomeBanner.textContent = `Welcome, ${user.name}`;
 
 let currList = 1;
 let listArray = [];
@@ -32,37 +34,6 @@ function createList(mongoListId, title, items) {
         }
     }
 }
-
-fetch(getListsURL, {
-    method: 'POST',
-    headers: {
-        'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ 'id': user.id }),
-})
-.then(res => res.json())
-.then(listsData => {
-    listsData.forEach(list => {
-        // displayList(list);
-        loadList(list);
-    });
-    listArray.forEach(list => {
-        displayList(list);
-    })
-    console.log(listArray);
-    let addListBtn = newEl(
-        'button',
-        { 'type': 'button' },
-        [ newText('Create New List') ]
-    );
-    addListBtn.addEventListener('click', e => {
-        addList(e);
-    })
-    lists.appendChild(addListBtn);
-})
-.catch(err => {
-    console.log(err);
-})
 
 function loadList(list) {
     listArray.push(createList(list._id, list.title, list.items));
@@ -133,14 +104,42 @@ function displayList(thisList) {
             newList.removeChild(newItemInput);
         })
     });
+    let delListBtn = newEl(
+        'button', 
+        { 'type': 'button' }, 
+        [ newText('Delete List') ]
+    );
 
     let listContainer = newEl(
         'div', 
         { 'class': 'list-container' },
-        [ title, newList, addItemBtn ]
+        [ title, newList, addItemBtn, delListBtn]
     );
 
     lists.appendChild(listContainer);
+
+    delListBtn.addEventListener('click', e => {
+        const listId = thisList.mongoListId;
+        fetch(delListURL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ listId }),
+        })
+        .then(res => {
+            if (res.ok) {
+                lists.removeChild(listContainer);
+            }
+            return res.text();
+        })
+        .then(msg => {
+            console.log(msg);
+        })
+        .catch(err => {
+            console.log(err);
+        })
+    })
 }
 function createListItem(thisList, newList, item) {
     let listItem = newEl(
@@ -201,8 +200,6 @@ async function addDbItem(listId, itemDesc) {
     // console.log(newItem);
     return newItem;
 }
-function addList(e) {
-}
 
 function newEl(type, attr={}, children=[]) {
     let el = document.createElement(type);
@@ -220,3 +217,52 @@ function newEl(type, attr={}, children=[]) {
 function newText(text) {
     return document.createTextNode(text);
 }
+
+function start() {
+    welcomeBanner.textContent = `Welcome, ${user.name}`;
+
+    addListBtn.addEventListener('click', e => {
+        const title = newTitleText.value;
+        fetch(addListURL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ userId: user.id, title }),
+        })
+        .then(res => res.json())
+        .then(({ mongoListId }) => {
+            let addedList = createList(mongoListId, title, []);
+            listArray.push(addedList);
+            displayList(addedList);
+            newTitleText.value = '';
+        })
+        .catch(err => {
+            console.log(err);
+        })
+    })
+
+    fetch(getListsURL, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 'id': user.id }),
+    })
+    .then(res => res.json())
+    .then(listsData => {
+        listsData.forEach(list => {
+            // displayList(list);
+            loadList(list);
+        });
+        listArray.forEach(list => {
+            displayList(list);
+        })
+        console.log(listArray);
+    })
+    .catch(err => {
+        console.log(err);
+    })
+}
+
+start();

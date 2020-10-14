@@ -69,6 +69,37 @@ app.post('/api/getLists', async (req, res) => {
     let lists = await List.find({ user: id });
     return res.json(lists);
 });
+app.post('/api/addList', async (req, res) => {
+    const { userId, title } = req.body;
+    try {
+        const newList = new List({ user: userId, title });
+        newList.save((err, list) => {
+            if(err) console.log(err);
+            console.log('List Added');
+            return res.json({ mongoListId: list._id });
+        });
+    } catch (error) {
+        console.log(error);
+        res.status(500).send('hi Server error');
+    }
+});
+app.post('/api/delList', async (req, res) => {
+    const { listId } = req.body;
+    try {
+        List.findByIdAndDelete(listId, function (err, deleted) {
+            if(err) console.log(err);
+            if (deleted) {
+                console.log("Successful deletion");
+                return res.send('List deleted');
+            } else {
+                return res.status(422).send('List not found');
+            }
+        });
+    } catch (error) {
+        console.log(error);
+        res.status(500).send('hi Server error');
+    }
+});
 
 app.post('/api/delItem', async (req, res) => {
     const { listId, itemId } = req.body;
