@@ -56,7 +56,6 @@ app.post('/api/delList', async (req, res) => {
 
 app.post('/api/delItem', async (req, res) => {
     const { listId, itemId } = req.body;
-    console.log(itemId);
     try {
         let list = await List.findById(listId);
         list.items.id(itemId).remove();
